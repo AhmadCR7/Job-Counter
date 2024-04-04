@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
       todayCount++;
       chrome.storage.local.set({ [todayString]: todayCount }, function () {
         countDisplay.textContent = todayCount;
-        loadApplicationHistory(); // Reload the application history to update the display
+        loadRecentHistory(); // Reload the application history to update the display
       });
     });
   }
@@ -46,34 +46,41 @@ document.addEventListener("DOMContentLoaded", () => {
     const todayString = getTodayDateString();
     chrome.storage.local.set({ [todayString]: 0 }, function () {
       countDisplay.textContent = "0";
-      loadApplicationHistory(); // Reload the application history to update the display
+      loadRecentHistory(); // Reload the application history to update the display
     });
   }
 
-  // Function to load the application history
-  function loadApplicationHistory() {
+   // Function to load the recent application history (last three days)
+   function loadRecentHistory() {
     chrome.storage.local.get(null, function (items) {
       const historyBody = document.getElementById("historyBody");
       if (historyBody) {
         historyBody.innerHTML = ""; // Clear current history
 
-        // Get keys and sort them in descending order (most recent date first)
-        Object.keys(items)
-          .sort((a, b) => new Date(b) - new Date(a))
-          .forEach(function (date) {
-            const count = items[date];
-            const row = document.createElement("tr");
-            row.innerHTML = `<td>${date}</td><td>${count}</td>`;
-            historyBody.appendChild(row); // Append new row to history
-          });
+        const sortedDates = Object.keys(items).sort((a, b) => new Date(b) - new Date(a));
+        const recentDates = sortedDates.slice(0, 3); // Get only the last three days
+        recentDates.forEach(function (date) {
+          const count = items[date];
+          const row = document.createElement("tr");
+          row.innerHTML = `<td>${date}</td><td>${count}</td>`;
+          historyBody.appendChild(row); // Append new row to history
+        });
       }
     });
   }
 
+
   // Load the current count and the application history when the popup is opened
   updateDateDisplay();
   loadCount();
-  loadApplicationHistory();
+  loadRecentHistory();
+  
+
+  // Event listener for the full history button (make sure this button is in your popup HTML)
+  document.getElementById("viewFullHistory").addEventListener("click", function() {
+    window.open("history.html");
+  });
+
 
   // Add event listeners for the buttons
   incrementButton.addEventListener("click", incrementCount);
