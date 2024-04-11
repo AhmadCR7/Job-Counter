@@ -19,8 +19,10 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.storage.local.get([todayString], function (result) {
       const todayCount = result[todayString] ? result[todayString] : 0;
       countDisplay.textContent = todayCount;
+      updateBadge(todayCount);  // Add this line to update the badge
     });
   }
+  
 
   // Function to increment the count for today
   function incrementCount() {
@@ -30,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
       todayCount++;
       chrome.storage.local.set({ [todayString]: todayCount }, function () {
         countDisplay.textContent = todayCount;
-        loadRecentHistory(); // Reload the application history to update the display
+        updateBadge(todayCount);  // Add this line to update the badge
       });
     });
   }
@@ -47,17 +49,21 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.storage.local.set({ [todayString]: 0 }, function () {
       countDisplay.textContent = "0";
       loadRecentHistory(); // Reload the application history to update the display
+      updateBadge('0');  // Add this line to reset the badge
     });
   }
+  
 
-   // Function to load the recent application history (last three days)
-   function loadRecentHistory() {
+  // Function to load the recent application history (last three days)
+  function loadRecentHistory() {
     chrome.storage.local.get(null, function (items) {
       const historyBody = document.getElementById("historyBody");
       if (historyBody) {
         historyBody.innerHTML = ""; // Clear current history
 
-        const sortedDates = Object.keys(items).sort((a, b) => new Date(b) - new Date(a));
+        const sortedDates = Object.keys(items).sort(
+          (a, b) => new Date(b) - new Date(a)
+        );
         const recentDates = sortedDates.slice(0, 3); // Get only the last three days
         recentDates.forEach(function (date) {
           const count = items[date];
@@ -69,18 +75,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Function to update the badge with the current count
+  function updateBadge(count) {
+    chrome.action.setBadgeText({ text: count.toString() }, function () {
+      if (chrome.runtime.lastError) {
+        console.error("Error setting badge text: ", chrome.runtime.lastError);
+      }
+    });
+  }
 
   // Load the current count and the application history when the popup is opened
   updateDateDisplay();
   loadCount();
   loadRecentHistory();
-  
 
   // Event listener for the full history button (make sure this button is in your popup HTML)
-  document.getElementById("viewFullHistory").addEventListener("click", function() {
-    window.open("history.html");
-  });
-
+  document
+    .getElementById("viewFullHistory")
+    .addEventListener("click", function () {
+      window.open("history.html");
+    });
 
   // Add event listeners for the buttons
   incrementButton.addEventListener("click", incrementCount);
